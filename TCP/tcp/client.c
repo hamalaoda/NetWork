@@ -14,6 +14,7 @@ int main(int argc, char const *argv[])
     struct sockaddr_in server;
     server.sin_family = AF_INET;
     server.sin_port = htons(8888);
+    server.sin_addr.s_addr = htonl(INADDR_ANY);
 
     /* 3.转换字符串IP > 数字IP*/
     inet_pton(AF_INET, "127.0.0.1", &server.sin_addr);
@@ -29,9 +30,10 @@ int main(int argc, char const *argv[])
     {
         printf("输入要发送的内容：");
         fgets(buf, sizeof(buf), stdin);
+        buf[strlen(buf) - 1] = '\0';
 
         // 输入exit退出循环
-        if (strcmp(buf, "exit\n") == 0)
+        if (strcmp(buf, "exit") == 0)
         {
             break;
         }
