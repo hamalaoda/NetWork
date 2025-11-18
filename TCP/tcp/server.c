@@ -33,7 +33,7 @@ int main(int argc, char const *argv[])
         // 接收客户端数据
         int n = recv(client_fd, buf, sizeof((buf)-1), 0);
         // n <= 表示：对方关闭 或 网络断开
-        else if (n <= 0)
+        if (n <= 0)
         {
             printf("客户端断开连接\n");
             break;
