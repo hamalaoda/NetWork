@@ -1,10 +1,3 @@
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include "ctl.h"
 
 int main(int argc, char const *argv[])
@@ -21,16 +14,16 @@ int main(int argc, char const *argv[])
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(8000);
-    addr.sin_addr = INADDR_ANY;
+    addr.sin_addr.s_addr = INADDR_ANY;
 
-    bind(server_fd, (struct sockaddr *)&addr), sizeof(addr);
+    bind(server_fd, (struct sockaddr *)&addr, sizeof(addr));
     listen(server_fd, 5);
 
     printf("服务器启动，等待客户端连接\n");
 
     // 等待客户端
     int client_fd = accept(server_fd, NULL, NULL);
-    printf("客户端已连接");
+    printf("客户端已连接\n");
 
     // 主循环处理命令
     while (1)
@@ -38,7 +31,7 @@ int main(int argc, char const *argv[])
         char cmd[4] = {0};
 
         // 读取 put 或 get 命令
-        int n = recv_n(client_fd, cmd, 3, 0);
+        int n = recv(client_fd, cmd, 3, 0);
         if (n < 0)
         {
             break;

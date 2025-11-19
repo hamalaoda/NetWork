@@ -54,7 +54,7 @@ void handle_put(int client_fd)
 
     // 读取文件名
     char filename[256];
-    recv_n(client_fd, failname, name_len); // 接收真实的文件名，并传给failename
+    recv_n(client_fd, filename, name_len); // 接收真实的文件名，并传给failename
     filename[name_len] = '\0';             // 补'\0'表示结束
 
     // 读取文件大小
@@ -222,4 +222,15 @@ void do_get(int sock, char *filename)
     // 接受文件的内容
     char buffer[1024];
     long long recv_total = 0;
+
+    while (recv_total < filesize)
+    {
+        int need = (filesize - recv_total > 1024) ? 1024 : (filesize - recv_total);
+        recv_n(sock, buffer, need);  // 将接收到的数据写入缓冲区，长度为need
+        fwrite(buffer, 1, need, fp); // 将缓冲区的数据写入到文件，每次写一个，写need次
+        recv_total += need;
+    }
+
+    fclose(fp);
+    printf("下载成功:%s\n", filename);
 }
