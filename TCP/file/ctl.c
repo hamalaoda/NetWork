@@ -43,7 +43,7 @@ void send_n(int sock, void *buf, int len)
 }
 
 /***********************
- * 处理 PUT（客户端上传）
+ * 处理 PUT（从接收缓冲区读到服务器端；客户端上传）
  ***********************/
 void handle_put(int client_fd)
 {
@@ -138,4 +138,88 @@ void handle_get(int client_fd)
 
     fclose(fp);
     printf("文件发送完毕：%s\n", filename);
+}
+
+/***********************
+ * 上传文件（PUT）(客户端往发送缓冲区发送)
+ ***********************/
+void do_put(int sock, char *filename)
+{
+    FILE *fp = fopen(filename, "rb"); // 只读二进制形式打开文件
+    if (fp == NULL)
+    {
+        perror("文件打开失败\n");
+        return;
+    }
+
+    // 发送put命令
+    send(sock, "put", 3, 0);
+
+    // 发送文件名长度+文件名
+    int name_len = strlen(filename);
+    send_n(sock, &name_len, sizeof(int));
+    send_n(sock, filename, name_len);
+
+    // 发送文件大小
+    fseek(fp, 0, SEEK_END);
+    long long filesize = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    send_n(sock, &filesize, sizeof(long long)); // 通过sock传递真实大小
+
+    printf("开始上传：%s 大小 %lld 字节\n", filename, filesize);
+
+    // 发送文件内容
+    char buffer[1024];
+    size_t n;
+    while (n = fread(buffer, 1, sizeof(buffer), fp) > 0)
+    {
+        send_n(sock, buffer, n);
+    }
+}
+
+/***********************
+ * 下载文件（GET）
+ ***********************/
+
+void do_get(int sock, char *filename)
+{
+    // 发送 get 命令
+    send(sock, "get", 3, 0);
+
+    // 发送文件名 +文件名长度
+    int name_len = strlen(filename);
+    send_n(sock, &name_len, sizeof(int)); // 文件名长度
+    send_n(sock, filename, name_len);     // 文件名
+
+    // 接收状态：“OK” 或 “ERR”
+    char status[4] = {0};
+    recv(sock, status, 3, 0);
+
+    if (strcmp(status, "ERR") == 0)
+    {
+        printf("服务器上不存在文件：%s\n", filename);
+        return;
+    }
+
+    // 读取文件名长度+文件名
+    recv_n(sock, &name_len, sizeof(int));
+    recv_n(sock, filename, name_len);
+    filename[name_len] = '\0';
+
+    // 读取文件大小
+    long long filesize;
+    recv_n(sock, &filesize, sizeof(long long));
+
+    FILE *fp = fopen(filename, "wb");
+    if (!fp)
+    {
+        perror("无法创建文件");
+        return;
+    }
+
+    printf("开始下载：%s 大小 %lld 字节\n", filename, filesize);
+
+    // 接受文件的内容
+    char buffer[1024];
+    long long recv_total = 0;
 }

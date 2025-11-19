@@ -7,10 +7,9 @@
 #include <unistd.h>
 #include "ctl.h"
 
-
-
 int main(int argc, char const *argv[])
 {
+    // 创建套接字
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd == -1)
     {
@@ -18,6 +17,7 @@ int main(int argc, char const *argv[])
         return -1;
     }
 
+    // 绑定地址
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(8000);
@@ -28,29 +28,29 @@ int main(int argc, char const *argv[])
 
     printf("服务器启动，等待客户端连接\n");
 
+    // 等待客户端
     int client_fd = accept(server_fd, NULL, NULL);
     printf("客户端已连接");
 
-    char cmd[4], filename[128], buffer[1024];
-
+    // 主循环处理命令
     while (1)
     {
-        memset(cmd, 0, sizeof(cmd));
+        char cmd[4] = {0};
 
-        if (strncmp(cmd, "get", 3) == 0)
+        // 读取 put 或 get 命令
+        int n = recv_n(client_fd, cmd, 3, 0);
+        if (n < 0)
         {
-            sscanf(cmd, "get %s", filename);
-            printf("客户端请求下载文件：%s\n", filename);
-        }
-        else if (strncmp(cmd, "put", 3))
-        {
-            sscanf(cmd, "put %s", filename);
-            printf("客户端请求上传文件");
-        }
-        else if (strncmp(cmd, "quit", 4) == 0)
-        {
-            printf("客户端退出\n");
             break;
+        }
+
+        if (strcmp(cmd, "put") == 0)
+        {
+            handle_put(client_fd);
+        }
+        else if (strcmp(cmd, "get") == 0)
+        {
+            handle_get(client_fd);
         }
         else
         {
