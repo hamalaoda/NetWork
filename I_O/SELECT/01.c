@@ -160,7 +160,7 @@ int main(int argc, char const *argv[])
 
                 else
                 {
-                    printf("收到来自客户端%d的%d字节的数据:.%s\n", sockfd, n, buf);
+                    printf("收到来自客户端%d的%d字节的数据:%s\n", sockfd, n, buf);
 
                     // 回显给服务器
                     write(sockfd, buf, n);
